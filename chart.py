@@ -16,7 +16,11 @@ STD_centers=np.zeros((ai_data.Table_all.shape[1],1))
 STD_centers=Disbal_dist_bal.T
 Disbal=np.zeros((ai_data.Table_all.shape[1],1))
 Disbal=Disbal_dist_bal.T*1000
-ai_data.korteg=ai_data.korteg*180/np.pi
-Table_KND, Table_KND_norm, Table_KND_norm_sum=Mbf.norm_Table_KND(ai_data.Table_all,ai_data.korteg,Disbal,ai_const.k,ai_const.T_dopusk,ai_const.T_dopusk_Db)
-
+korteg_new=np.zeros((ai_data.korteg.shape[0],ai_data.korteg.shape[1]))
+korteg_new=ai_data.korteg*180/np.pi
+#Функция вычисления таблиц для построения графиков
+Table1_percent, Table2_percent,Table3_percent,Table4_percent=Mbf.norm_Table_KND(ai_data.Table_all,korteg_new,Disbal,ai_const.k,ai_const.T_dopusk,ai_const.T_dopusk_Db)
+#Первоначальный график
+Mbf.chart_plot(Table1_percent, Table2_percent,Table3_percent,Table4_percent)
+Mbf.chart_bar(Table1_percent, Table2_percent,Table3_percent,Table4_percent)
 g=0

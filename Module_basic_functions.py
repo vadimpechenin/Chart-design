@@ -1,6 +1,7 @@
 """ Модуль базовых функций для работы в chart"""
 import numpy as np
 import math
+import matplotlib.pyplot as plt
 
 def function_of_center_with_support_Z(nm_line,O,O_opora_2,M):
     """Функция нахождения результирующих дисбалансов сборки"""
@@ -113,9 +114,117 @@ def norm_Table_KND(Table_all,korteg,Disbal,k,T_dopusk,T_dopusk_Db):
     Table_KND_norm = Table_KND/ T_dopusk
     Table_KND_norm_sum=np.sum(Table_KND_norm, axis=1)
     l_geom=np.argmin(Table_KND_norm_sum)
-    Angles_result=np.zeros(korteg.shape[0])
+    Angles_result = np.zeros(korteg.shape[0])
     Angles_result = korteg[:, l_geom]
-    Disbal_norm=np.zeros(Disbal.shape[0])
-    Disbal_norm = Disbal/ T_dopusk_Db
-    
-    return Table_KND, Table_KND_norm, Table_KND_norm_sum
+    Disbal_norm = np.zeros(Disbal.shape[0])
+    Disbal_norm = Disbal / T_dopusk_Db
+    l_bal = np.argmin(Disbal_norm)
+    l_obobsh = np.argmin(Disbal_norm + Table_KND_norm_sum)
+    # Финальные матрицы
+    Table1 = np.zeros(Table_KND.shape[1] + 1)
+    Table2 = np.zeros(Table_KND.shape[1] + 1)
+    Table3 = np.zeros(Table_KND.shape[1] + 1)
+    Table4 = np.zeros(Table_KND.shape[1] + 1)
+    Table1[:-1], Table1[-1] = [Table_KND[0, :], Disbal[0]]
+    Table2[:-1], Table2[-1] = Table_KND[l_geom, :], Disbal[l_geom]
+    Table3[:-1], Table3[-1] = Table_KND[l_bal, :], Disbal[l_bal]
+    Table4[:-1], Table4[-1] = Table_KND[l_obobsh, :], Disbal[l_obobsh]
+    Table1_percent = np.zeros(Table_KND.shape[1] + 1)
+    Table2_percent = np.zeros(Table_KND.shape[1] + 1)
+    Table3_percent = np.zeros(Table_KND.shape[1] + 1)
+    Table4_percent = np.zeros(Table_KND.shape[1] + 1)
+    Table1_percent = Table1 / Table1 * 100
+    Table2_percent = Table2 / Table1 * 100
+    Table3_percent = Table3 / Table1 * 100
+    Table4_percent = Table4 / Table1 * 100
+
+    return Table1_percent, Table2_percent, Table3_percent, Table4_percent
+
+
+def chart_plot(Table1_percent, Table2_percent, Table3_percent, Table4_percent):
+    # Функция для построения графиков
+    t = np.array([1, 2, 3, 4, 5, 6, 7])
+    idx = np.array([0, 2, 4, 6, 8, 10, 12])
+    fig = plt.figure(figsize=(8, 5), dpi=96)
+    # plt.fig(figsize=(8, 5), dpi=96)
+    plt.plot(t, Table1_percent[idx], color="b", linewidth=1)
+    plt.plot(t, Table2_percent[idx], color="r", linestyle='--', linewidth=2)
+    plt.plot(t, Table3_percent[idx], color="g", linestyle='--', linewidth=2)
+    plt.plot(t, Table4_percent[idx], color="k", linewidth=2)
+    for j in t:
+        plt.plot([j, j], [0, Table3_percent[idx].max() + 10], color="m", linestyle='--', linewidth=1)
+
+    plt.title("Результаты оптимизации", fontsize=24)
+    plt.xlabel("№ Сборочного параметра", fontsize=14)
+    plt.ylabel("Доля от 'нулевой' сборки, %", fontsize=14)
+    # Диапазон оси x:
+    plt.xlim(1, 7)
+
+    # Диапазон оси y:
+    plt.ylim(0, Table3_percent[idx].max() + 10)
+    plt.legend(("0 положение", "KAsP", "KDP", "K"))
+    # ax.imshow(img, interpolation='none')
+    plt.savefig('D:\\NX_files\\IIR_2018\\Assembly_KND_Vadim_1\\Chart\\Исходный график_испр..jpg', dpi=96,
+                transparent=True)
+    plt.show()
+
+
+def chart_hist(Table1_percent, Table2_percent, Table3_percent, Table4_percent):
+    # Построеине гистограмм столбчатых
+    # `numpy.random` uses its own PRNG.
+    np.random.seed(444)
+    np.set_printoptions(precision=3)
+    d = np.random.laplace(loc=15, scale=3, size=500)
+    # An "interface" to matplotlib.axes.Axes.hist() method
+    n, bins, patches = plt.hist(x=d, bins='auto', color='#0504aa',
+                                alpha=0.7, rwidth=0.85)
+    plt.grid(axis='y', alpha=0.75)
+    plt.xlabel('Value')
+    plt.ylabel('Frequency')
+    plt.title('My Very Own Histogram')
+    plt.text(23, 45, r'$\mu=15, b=3$')
+    maxfreq = n.max()
+    # Set a clean upper y-axis limit.
+    plt.ylim(ymax=np.ceil(maxfreq / 10) * 10 if maxfreq % 10 else maxfreq + 10)
+    plt.show()
+
+
+def chart_bar(Table1_percent, Table2_percent, Table3_percent, Table4_percent):
+    # Построеине гистограмм столбчатых 2
+    # https://pyprog.pro/mpl/mpl_bar.html
+    width_hist = 0.3
+    x = np.array([1, 2, 3, 4, 5, 6, 7])
+    x1 = np.array([1, 2, 3, 4, 5, 6, 7]) - width_hist * 1.0
+    x2 = np.array([1, 2, 3, 4, 5, 6, 7]) - width_hist * 0.0
+    x3 = np.array([1, 2, 3, 4, 5, 6, 7]) + width_hist * 1.0
+    idx = np.array([0, 2, 4, 6, 8, 10, 12])
+
+    fig, ax = plt.subplots()
+    # Построение нескольких прямоугольниокв с данными по % от нулевого параметра
+    # 1 Вариант
+    if (1 == 0):
+        ax.bar(x1, Table2_percent[idx], width=width_hist)
+        ax.bar(x2, Table3_percent[idx], width=width_hist)
+        ax.bar(x3, Table4_percent[idx], width=width_hist)
+    elif (1 == 0):
+        # 2 Вариант
+        ax.bar(x, Table2_percent[idx])
+        ax.bar(x, Table3_percent[idx], bottom=Table2_percent[idx].max() + 10)
+        ax.bar(x, Table4_percent[idx], bottom=Table2_percent[idx].max() + Table3_percent[idx].max() + 20)
+    else:
+        # 3 Вариант
+        ax.bar(x, Table2_percent[idx])
+        ax.bar(x, Table3_percent[idx], bottom=Table2_percent[idx])
+        ax.bar(x, Table4_percent[idx], bottom=Table2_percent[idx] + Table3_percent[idx])
+    ax.set_facecolor('seashell')
+    fig.set_facecolor('floralwhite')
+    fig.set_figwidth(7)  # ширина Figure
+    fig.set_figheight(5)  # высота Figure
+    plt.title("Результаты оптимизации", fontsize=24)
+    plt.xlabel("№ Сборочного параметра", fontsize=14)
+    plt.ylabel("Доля от 'нулевой' сборки, %", fontsize=14)
+    plt.legend(("KAsP", "KDP", "K"))
+    # plt.savefig('D:\\NX_files\\IIR_2018\\Assembly_KND_Vadim_1\\Chart\\Гистограмма1.jpg', dpi=96, transparent=True)
+    # plt.savefig('D:\\NX_files\\IIR_2018\\Assembly_KND_Vadim_1\\Chart\\Гистограмма2.jpg', dpi=96, transparent=True)
+    plt.savefig('D:\\NX_files\\IIR_2018\\Assembly_KND_Vadim_1\\Chart\\Гистограмма3.jpg', dpi=96, transparent=True)
+    plt.show()
